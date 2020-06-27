@@ -1,0 +1,215 @@
+---java方法
+new CountDownLatch(1).await();  使得永久堵塞且不占用资源
+new Semaphore(0).acquire();     使得永久堵塞且不占用资源
+
+---idea terminal 
+jps                  查看当前的所有线程
+jstack 【线程号】    查看线程栈帧
+lsof -i：8080        查看被占用的端口
+kill -9 【进程号】   杀掉进程
+
+
+---linux 
+jps	查看所有线程
+pstree -p【线程号】  查看线程栈帧
+
+
+为什么用多线程
+利用资源
+
+
+线程本质，为什难
+多个工人对着一份说明书做各自的事情，哪个工人做的，做到哪里，出了异常都不知道。
+异常处理只能向当前线程和当前方法栈抛出
+共有变量公有，私有变量私有
+
+
+thread是什么（只有调用star（）方法且没结束的thread对象实例代表线程）
+线程实例
+
+
+方法栈是什么
+方法调用的过程，包含多个栈帧
+多线程各自有自己的方法栈，方法调用的起点，也就是最底部只有两种可能Thread.run()和main()方法
+
+
+栈帧是什么
+每个线程有自己的栈帧，每调用一个方法就是一个栈帧，栈帧产生于方法，方法是说明书，每个线程根据说明书创建栈帧
+线程调用方法，添加属于自己方法栈的栈帧
+栈帧后进先出执行完出栈
+是一块儿内存区域存放局部变量表和操作数栈执行字节码所需要的信息
+
+
+线程和进程的区别
+共享内容空间，线程组等于进程
+
+
+在windows和linux的jvm中线程的底层模型
+相同：代码中的线程一一映射到系统的线程上去执行，受操作系统的调度器控制
+区别：linux中线程等于轻量级进程只是同个进程的线程共享一块儿内存
+优点：实现简单
+缺点：占用资源，上下文且换慢，灵活性差不受控制
+
+
+线程生命周期
+Thread内部类：state 
+	new：star()方法创建
+	runnable：线程正在执行代码或是等待资源（等待io传输）
+	blocked：等待锁 synchronized 状态的 monitor lock
+	waiting：特殊等待状态。jvm线程使用Object的wait()、notify()、notifyAll()这一套机制执行线程协同或是等待
+	timed_waiting：waiting增加超时操作
+	
+    
+Thread local（不同线程获取不同变量）
+提供线程局部变量实例
+interceptor
+
+
+什么是Runnable/Callable
+本质都是抽象任务，实现一份具体的说明书，用来给线程执行调用
+Runnable：不能抛出check Exception，不能返回值，只能用全局变量的方法存储一些东西
+Callable：在Runnable的基础上增加了返回值，时时刻刻抛出异常Exception需要捕获，
+    线程池submit方法返回值是futer，接收任务执行后的返回值
+
+
+为什么多线程的很多方法一定要捕获处理一个异常Interrupted Exception
+Thread很多方法是阻塞的，sleep(),wait()阻塞的方法在jvm中有特殊处理，可以通过调用Thread的interrupt()方法进行中断操作，让他抛出异常。
+
+
+为什么spring启动以后不会中断，一直等待处理服务
+使用阻塞队列TaskQueue、BlockingQueue，不断从队列中获取http请求，如果队列为空则阻塞，不为空则处理请求
+
+
+java内存模型
+栈：方法栈，只有局部变量和方法帧栈
+堆：除了局部变量都在堆里
+
+
+如果实现线程安全检查key并put保存起来
+ConCurrentMap中的putIfAbsent方法原子级的put方法实现原理是判空、判断reset状态然后用synchronized
+锁住key值对应的hash桶然后遍历链表进行判空和put处理
+
+
+map判空方法
+map.containsKey("");
+
+
+为什么String用final修饰为不可变
+线程安全、不会被方法间字符串处理影响、共享常量池
+
+
+原子性解决方式
+不可变对象 （String、BigDecimal）
+各种锁（Synchronized、lock)
+并发工具包 Java.util.concurrent(简称：JUC)(底层通常是CAS：Compare And Set 对比并设置)
+    写回去的时候，所有都和预期一样才会更新，如果目标被改变了操作就失效解决并发被同时访问的问题
+    自旋（spin）（乐观锁）并进行对比更新，更新是不锁，只是失败后不断重复
+    int -> AtomicInteger/Long
+    HashMap -> ConcurrentHashMap
+    List -> CopeOnWriteArrayList
+    TreeMap -> ConcurrentSkipListMap
+    [] -> AtomicLongArray
+    Object - AtomicReference
+
+
+
+
+
+为什么lambda表达式不能使用动态参数
+final
+iffinal
+
+
+java原生解决多线程问题（安全、协同、效率、易用）
+Synchronized、wait、notify
+
+JUC：并发工具包（java.util.concurrent）
+
+
+CAS：比较交换（compare and swap）
+乐观锁、悲观锁
+ABA问题，A变成B再变A，比较时发现没有问题，其实已经改变了导致其他问题。
+额外记录时间戳，不光记录值，还记录它的时间戳。
+
+
+悲观锁（远古实现）
+HashTable 所有方法加synchronized
+Collections类返回Map的包装类synchronizedMap，将所有方法加sync
+
+synchronized（同步）
+语言级别上的支持
+synchronized方法等待对参数上锁，如果已锁进行等待
+monitorentor和monitorexit监控操作系统层面，耗时操作
+
+sync锁膨胀和锁优化，对象头标志位含义
+    无锁
+
+    偏向锁（biased）
+    如果某个对象始终仅被一个线程使用，标记为偏向，线程直接使用就行，
+    如果出现其他线程使用时撤销偏向标志并恢复为无锁
+
+    轻量锁
+    多个线程使用，但是竞争不严重，绝大多数情况是一个线程使用，抢到就能用，不需要monitor
+
+    重量锁
+    多个线程竞争，必须获取monitor
+
+    锁粗化（编译器自动优化）
+        频繁加锁解锁，合并加锁解锁的过程，使锁使用范围更大
+
+    锁消除（编译器优化）
+        经过逃逸分析，一个对象不可能被竞争，就不需要上锁
+
+
+java对象头（虚拟机）
+长度：32位或64位根据系统不同而不同
+
+
+Java.Lang.Object
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

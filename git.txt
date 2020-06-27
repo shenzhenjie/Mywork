@@ -1,0 +1,14 @@
+
+git merge 【其他分支】 --squash    【将另外一个分支上的代码squash 并合并到当前分支上】
+
+git reset 【origin/分支名】 --hard   【某个本地分支代码重置为远端的hard状态】
+
+git checkout 【分支名】    【切换为本地某个分支】
+
+
+
+
+
+
+
+
